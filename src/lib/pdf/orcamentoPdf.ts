@@ -46,7 +46,7 @@ export function gerarOrcamentoPdf(orcamento: OrcamentoPdfData, logoPath: string)
     doc
       .fontSize(9)
       .fillColor(MUTED)
-      .text("Impressão 3D personalizada · Fortaleza/CE", MARGIN, MARGIN + 62);
+      .text("Onde ideias ganham forma", MARGIN, MARGIN + 62);
 
     doc
       .fontSize(14)
