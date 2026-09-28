@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Paleta oficial da Luar Print (extraída de luarprint.com.br/css/styles.css) */
+:root {
+  --color-bg: 244 246 251; /* #f4f6fb */
+  --color-panel: 255 255 255; /* #ffffff */
+  --color-border: 226 231 241; /* #e2e7f1 */
+  --color-text: 22 38 74; /* #16264a */
+  --color-muted: 74 88 120; /* #4a5878 */
+  --color-accent: 225 96 28; /* #e1601c */
+  --color-accent-hover: 242 121 47; /* #f2792f */
+}
+
+.dark {
+  --color-bg: 11 17 32; /* #0b1120 */
+  --color-panel: 19 31 56; /* #131f38 */
+  --color-border: 33 48 79; /* #21304f */
+  --color-text: 238 242 251; /* #eef2fb */
+  --color-muted: 159 176 208; /* #9fb0d0 */
+  --color-accent: 225 96 28; /* #e1601c */
+  --color-accent-hover: 242 121 47; /* #f2792f */
+}
+
+* {
+  border-color: rgb(var(--color-border));
+}
+
+body {
+  background-color: rgb(var(--color-bg));
+  color: rgb(var(--color-text));
+}
+
+::selection {
+  background-color: rgb(var(--color-accent) / 0.3);
+}
