@@ -143,7 +143,8 @@ create table config_precificacao (
   updated_at timestamptz not null default now()
 );
 
-insert into config_precificacao (id) values (1);
+-- id não é forçado: a coluna é GENERATED ALWAYS, essa é a primeira linha então já nasce id = 1
+insert into config_precificacao default values;
 
 -- ========== ESTOQUE ==========
 create table insumos (
