@@ -5,7 +5,9 @@ import { FilterBar } from "@/components/FilterBar";
 import { LinkButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
+import { RowActions } from "@/components/RowActions";
 import { formatBRL, formatDate } from "@/lib/format";
+import { deleteDespesa } from "./actions";
 
 export default async function DespesasPage({
   searchParams,
@@ -72,27 +74,38 @@ export default async function DespesasPage({
                 <th className="px-4 py-3">Descrição</th>
                 <th className="px-4 py-3">Pagamento</th>
                 <th className="px-4 py-3 text-right">Valor</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
-              {lista.map((d) => (
-                <tr key={d.id} className="border-b border-border last:border-0 hover:bg-border/20">
-                  <td className="px-4 py-3 text-muted">{formatDate(d.data)}</td>
-                  <td className="px-4 py-3">
-                    <Badge tone={d.categoria === "Insumos" ? "neutral" : "accent"}>{d.categoria}</Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link href={`/despesas/${d.id}`} className="font-medium text-text hover:text-accent">
-                      {d.descricao}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-muted">{d.forma_pagamento ?? "—"}</td>
-                  <td className="px-4 py-3 text-right font-medium text-text">{formatBRL(d.valor)}</td>
-                </tr>
-              ))}
+              {lista.map((d) => {
+                const deleteWithId = deleteDespesa.bind(null, d.id);
+                return (
+                  <tr key={d.id} className="border-b border-border last:border-0 hover:bg-border/20">
+                    <td className="px-4 py-3 text-muted">{formatDate(d.data)}</td>
+                    <td className="px-4 py-3">
+                      <Badge tone={d.categoria === "Insumos" ? "neutral" : "accent"}>{d.categoria}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link href={`/despesas/${d.id}`} className="font-medium text-text hover:text-accent">
+                        {d.descricao}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-muted">{d.forma_pagamento ?? "—"}</td>
+                    <td className="px-4 py-3 text-right font-medium text-text">{formatBRL(d.valor)}</td>
+                    <td className="px-4 py-3">
+                      <RowActions
+                        editHref={`/despesas/${d.id}`}
+                        deleteAction={deleteWithId}
+                        confirmText={`Excluir a despesa "${d.descricao}"?`}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
               {lista.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted">
+                  <td colSpan={6} className="px-4 py-8 text-center text-muted">
                     Nenhuma despesa encontrada.
                   </td>
                 </tr>

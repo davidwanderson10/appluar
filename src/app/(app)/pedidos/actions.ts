@@ -147,3 +147,24 @@ export async function removeItemPedido(pedidoId: number, itemId: number) {
   revalidatePath(`/pedidos/${pedidoId}`);
   revalidatePath("/estoque");
 }
+
+export async function deletePedido(id: number) {
+  const supabase = await createClient();
+
+  const { data: itens } = await supabase
+    .from("itens_pedido")
+    .select("insumo_id, quantidade_baixada")
+    .eq("pedido_id", id);
+
+  for (const item of itens ?? []) {
+    if (item.insumo_id && item.quantidade_baixada) {
+      await estornarEstoque(supabase, { insumoId: item.insumo_id, quantidade: item.quantidade_baixada, pedidoId: id });
+    }
+  }
+
+  await supabase.from("pedidos").delete().eq("id", id);
+
+  revalidatePath("/pedidos");
+  revalidatePath("/estoque");
+  revalidatePath("/dashboard");
+}

@@ -5,8 +5,9 @@ import { Input, Select, Label, FieldGroup } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
+import { RowActions } from "@/components/RowActions";
 import { formatBRL, formatDateTime } from "@/lib/format";
-import { createInsumo, registrarMovimentacao } from "./actions";
+import { createInsumo, registrarMovimentacao, deleteInsumo } from "./actions";
 
 export default async function EstoquePage() {
   const supabase = await createClient();
@@ -53,12 +54,14 @@ export default async function EstoquePage() {
                   <th className="px-4 py-3">Material/Cor</th>
                   <th className="px-4 py-3 text-right">Estoque</th>
                   <th className="px-4 py-3">Movimentar</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody>
                 {lista.map((i) => {
                   const baixo = i.quantidade_estoque <= i.quantidade_minima;
                   const registrarWithId = registrarMovimentacao.bind(null, i.id);
+                  const deleteWithId = deleteInsumo.bind(null, i.id);
                   return (
                     <tr key={i.id} className="border-b border-border last:border-0">
                       <td className="px-4 py-3">
@@ -94,12 +97,19 @@ export default async function EstoquePage() {
                           </label>
                         </form>
                       </td>
+                      <td className="px-4 py-3">
+                        <RowActions
+                          editHref={`/estoque/${i.id}`}
+                          deleteAction={deleteWithId}
+                          confirmText={`Excluir o insumo "${i.nome}"?`}
+                        />
+                      </td>
                     </tr>
                   );
                 })}
                 {lista.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-muted">
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted">
                       Nenhum insumo cadastrado.
                     </td>
                   </tr>

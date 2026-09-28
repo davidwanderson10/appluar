@@ -122,3 +122,10 @@ export async function converterEmPedido(orcamentoId: number) {
   revalidatePath("/estoque");
   redirect(`/pedidos/${pedido.id}`);
 }
+
+export async function deleteOrcamento(id: number) {
+  const supabase = await createClient();
+  await supabase.from("orcamentos").delete().eq("id", id);
+
+  revalidatePath("/orcamentos");
+}

@@ -81,3 +81,10 @@ export async function updateProduto(id: number, formData: FormData) {
   revalidatePath(`/produtos/${id}`);
   redirect(`/produtos/${id}`);
 }
+
+export async function deleteProduto(id: number) {
+  const supabase = await createClient();
+  await supabase.from("produtos").delete().eq("id", id);
+
+  revalidatePath("/produtos");
+}

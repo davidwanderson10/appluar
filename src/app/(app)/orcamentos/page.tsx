@@ -5,7 +5,9 @@ import { FilterBar } from "@/components/FilterBar";
 import { LinkButton } from "@/components/ui/Button";
 import { StatusOrcamentoBadge } from "@/components/ui/Badge";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
+import { RowActions } from "@/components/RowActions";
 import { formatBRL, formatDate } from "@/lib/format";
+import { deleteOrcamento } from "./actions";
 
 const STATUS_OPTIONS = ["Enviado", "Aprovado", "Recusado", "Convertido"];
 
@@ -60,28 +62,39 @@ export default async function OrcamentosPage({
                 <th className="px-4 py-3">Validade</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Valor</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
-              {lista.map((o) => (
-                <tr key={o.id} className="border-b border-border last:border-0 hover:bg-border/20">
-                  <td className="px-4 py-3">
-                    <Link href={`/orcamentos/${o.id}`} className="font-medium text-text hover:text-accent">
-                      #{o.id}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-muted">{o.cliente_nome}</td>
-                  <td className="px-4 py-3 text-muted">{formatDate(o.data)}</td>
-                  <td className="px-4 py-3 text-muted">{formatDate(o.validade)}</td>
-                  <td className="px-4 py-3">
-                    <StatusOrcamentoBadge status={o.status} />
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-text">{formatBRL(o.venda_total)}</td>
-                </tr>
-              ))}
+              {lista.map((o) => {
+                const deleteWithId = deleteOrcamento.bind(null, o.id);
+                return (
+                  <tr key={o.id} className="border-b border-border last:border-0 hover:bg-border/20">
+                    <td className="px-4 py-3">
+                      <Link href={`/orcamentos/${o.id}`} className="font-medium text-text hover:text-accent">
+                        #{o.id}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-muted">{o.cliente_nome}</td>
+                    <td className="px-4 py-3 text-muted">{formatDate(o.data)}</td>
+                    <td className="px-4 py-3 text-muted">{formatDate(o.validade)}</td>
+                    <td className="px-4 py-3">
+                      <StatusOrcamentoBadge status={o.status} />
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-text">{formatBRL(o.venda_total)}</td>
+                    <td className="px-4 py-3">
+                      <RowActions
+                        editHref={`/orcamentos/${o.id}`}
+                        deleteAction={deleteWithId}
+                        confirmText={`Excluir o orçamento #${o.id}?`}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
               {lista.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted">
                     Nenhum orçamento encontrado.
                   </td>
                 </tr>

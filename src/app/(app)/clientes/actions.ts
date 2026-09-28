@@ -53,3 +53,16 @@ export async function updateCliente(id: number, formData: FormData) {
   revalidatePath(`/clientes/${id}`);
   redirect(`/clientes/${id}`);
 }
+
+export async function deleteCliente(id: number) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("clientes").delete().eq("id", id);
+
+  if (error) {
+    redirect(
+      `/clientes?erro=${encodeURIComponent("Não é possível excluir: este cliente possui pedidos ou orçamentos vinculados.")}`
+    );
+  }
+
+  revalidatePath("/clientes");
+}

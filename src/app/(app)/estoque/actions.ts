@@ -24,6 +24,36 @@ export async function createInsumo(formData: FormData) {
   redirect("/estoque");
 }
 
+export async function updateInsumo(id: number, formData: FormData) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("insumos")
+    .update({
+      nome: String(formData.get("nome") ?? "").trim(),
+      tipo: String(formData.get("tipo") || "Filamento"),
+      material: String(formData.get("material") || "") || null,
+      cor: String(formData.get("cor") || "") || null,
+      unidade: String(formData.get("unidade") || "g"),
+      quantidade_estoque: Number(formData.get("quantidade_estoque") || 0),
+      quantidade_minima: Number(formData.get("quantidade_minima") || 0),
+      custo_unitario: Number(formData.get("custo_unitario") || 0),
+      fornecedor: String(formData.get("fornecedor") || "") || null,
+    })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/estoque");
+  redirect("/estoque");
+}
+
+export async function deleteInsumo(id: number) {
+  const supabase = await createClient();
+  await supabase.from("insumos").delete().eq("id", id);
+
+  revalidatePath("/estoque");
+}
+
 export async function registrarMovimentacao(insumoId: number, formData: FormData) {
   const supabase = await createClient();
 

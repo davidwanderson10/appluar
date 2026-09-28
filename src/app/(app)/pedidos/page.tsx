@@ -5,7 +5,9 @@ import { FilterBar } from "@/components/FilterBar";
 import { LinkButton } from "@/components/ui/Button";
 import { StatusPedidoBadge } from "@/components/ui/Badge";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
+import { RowActions } from "@/components/RowActions";
 import { formatBRL, formatDate, formatPercent } from "@/lib/format";
+import { deletePedido } from "./actions";
 
 const STATUS_OPTIONS = ["Aguardando", "Em Impressão", "Pós-Processamento", "Pronto", "Entregue", "Cancelado"];
 
@@ -79,11 +81,13 @@ export default async function PedidosPage({
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Valor</th>
                 <th className="px-4 py-3 text-right">Margem</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {lista.map((p) => {
                 const margem = p.venda_total > 0 ? p.lucro_total / p.venda_total : 0;
+                const deleteWithId = deletePedido.bind(null, p.id);
                 return (
                   <tr key={p.id} className="border-b border-border last:border-0 hover:bg-border/20">
                     <td className="px-4 py-3">
@@ -99,12 +103,19 @@ export default async function PedidosPage({
                     </td>
                     <td className="px-4 py-3 text-right font-medium text-text">{formatBRL(p.venda_total)}</td>
                     <td className="px-4 py-3 text-right text-muted">{formatPercent(margem)}</td>
+                    <td className="px-4 py-3">
+                      <RowActions
+                        editHref={`/pedidos/${p.id}`}
+                        deleteAction={deleteWithId}
+                        confirmText={`Excluir o pedido #${p.id}? Essa ação não pode ser desfeita.`}
+                      />
+                    </td>
                   </tr>
                 );
               })}
               {lista.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted">
+                  <td colSpan={8} className="px-4 py-8 text-center text-muted">
                     Nenhum pedido encontrado.
                   </td>
                 </tr>
