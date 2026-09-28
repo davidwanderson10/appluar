@@ -14,7 +14,7 @@ Logo e paleta de cores (`src/app/globals.css`, `public/logo-*.png`) foram extra�
 ## 1. Criar o projeto no Supabase
 
 1. Crie uma conta/projeto em [supabase.com](https://supabase.com) (região São Paulo, se disponível).
-2. Em **SQL Editor**, cole e rode o conteúdo de `supabase/migrations/0001_init.sql`. Isso cria todas as tabelas, as views de resumo, o bucket de Storage `produtos` e as políticas de RLS.
+2. Em **SQL Editor**, cole e rode o conteúdo de `supabase/migrations/0001_init.sql` e depois `0002_despesas.sql`, nessa ordem. Isso cria todas as tabelas, as views de resumo, o bucket de Storage `produtos` e as políticas de RLS.
 3. Em **Authentication → Users**, crie o usuário administrador (seu e-mail e uma senha) — é o único login do sistema por enquanto.
 4. Em **Project Settings → API**, copie:
    - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
@@ -56,6 +56,7 @@ src/
       produtos/
       pedidos/
       orcamentos/           inclui geração de PDF em /orcamentos/[id]/pdf
+      despesas/             gastos gerais (marketing, embalagem, anúncios...)
       estoque/
       calculadora/
       configuracoes/
@@ -66,7 +67,9 @@ src/
     estoque.ts                baixa/estorno automático de insumos
     excel.ts                  exportação de listas para .xlsx
     pdf/                       documento do orçamento em PDF
-supabase/migrations/0001_init.sql   schema completo do banco
+supabase/migrations/
+  0001_init.sql              schema principal
+  0002_despesas.sql          tabela de despesas gerais
 ```
 
 ## Regras de negócio implementadas
@@ -76,6 +79,9 @@ supabase/migrations/0001_init.sql   schema completo do banco
 - Pedidos e orçamentos têm múltiplos itens, cada um vinculado a um produto cadastrado (com custo/preço pré-preenchidos) ou avulso.
 - Ao criar um item de pedido vinculado a um produto com consumo de filamento cadastrado, o sistema tenta dar baixa automática no insumo de mesmo material/cor; ao remover o item, o estoque é estornado.
 - Orçamentos podem ser convertidos em pedido com um clique (copia cliente e itens, também tentando a baixa de estoque).
+- **Estoque/Insumos** é só para materiais de produção com controle de quantidade (filamento, embalagem etc.). **Despesas** é o livro-caixa geral (marketing, anúncios, fitas, adesivos, taxas...), sem controle de quantidade, só valor.
+- Ao registrar uma "Entrada" de insumo no Estoque, o sistema lança automaticamente uma despesa (categoria "Insumos", valor = quantidade × custo unitário) — dá pra desmarcar a caixinha "Lançar como despesa" se for só um ajuste de contagem, não uma compra de verdade.
+- O Dashboard soma as despesas do mesmo período filtrado e mostra o **Resultado (Faturamento − Despesas)**, além do detalhamento por categoria.
 - Tema claro/escuro com a paleta da Luar Print, persistido no navegador.
 
 ## Próximos passos sugeridos

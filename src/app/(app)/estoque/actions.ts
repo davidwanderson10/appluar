@@ -30,9 +30,14 @@ export async function registrarMovimentacao(insumoId: number, formData: FormData
   const tipo = String(formData.get("tipo") || "Entrada");
   const quantidade = Number(formData.get("quantidade") || 0);
   const observacao = String(formData.get("observacao") || "") || null;
+  const registrarDespesa = formData.get("registrar_despesa") === "on";
   if (quantidade <= 0) throw new Error("Quantidade deve ser maior que zero");
 
-  const { data: insumo } = await supabase.from("insumos").select("quantidade_estoque").eq("id", insumoId).single();
+  const { data: insumo } = await supabase
+    .from("insumos")
+    .select("nome, quantidade_estoque, custo_unitario")
+    .eq("id", insumoId)
+    .single();
   if (!insumo) throw new Error("Insumo não encontrado");
 
   const novaQuantidade =
@@ -46,6 +51,20 @@ export async function registrarMovimentacao(insumoId: number, formData: FormData
     motivo: "Ajuste manual",
     observacao,
   });
+
+  // Compra de insumo (Entrada) entra automaticamente como despesa, pra fechar o caixa do mês.
+  if (tipo === "Entrada" && registrarDespesa) {
+    const valor = quantidade * Number(insumo.custo_unitario ?? 0);
+    await supabase.from("despesas").insert({
+      categoria: "Insumos",
+      descricao: `Compra de insumo: ${insumo.nome}`,
+      valor,
+      insumo_id: insumoId,
+      observacoes: observacao,
+    });
+    revalidatePath("/despesas");
+    revalidatePath("/dashboard");
+  }
 
   revalidatePath("/estoque");
 }

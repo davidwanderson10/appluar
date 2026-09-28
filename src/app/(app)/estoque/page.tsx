@@ -77,15 +77,21 @@ export default async function EstoquePage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <form action={registrarWithId} className="flex items-center gap-2">
-                          <Select name="tipo" className="w-28" defaultValue="Entrada">
-                            <option>Entrada</option>
-                            <option>Saída</option>
-                          </Select>
-                          <Input name="quantidade" type="number" step="0.01" className="w-24" placeholder="qtd" />
-                          <Button type="submit" variant="secondary" className="whitespace-nowrap">
-                            Registrar
-                          </Button>
+                        <form action={registrarWithId} className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <Select name="tipo" className="w-28" defaultValue="Entrada">
+                              <option>Entrada</option>
+                              <option>Saída</option>
+                            </Select>
+                            <Input name="quantidade" type="number" step="0.01" className="w-24" placeholder="qtd" />
+                            <Button type="submit" variant="secondary" className="whitespace-nowrap">
+                              Registrar
+                            </Button>
+                          </div>
+                          <label className="flex items-center gap-1.5 text-xs text-muted">
+                            <input type="checkbox" name="registrar_despesa" defaultChecked className="h-3.5 w-3.5" />
+                            Lançar como despesa (compra)
+                          </label>
                         </form>
                       </td>
                     </tr>

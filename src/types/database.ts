@@ -148,3 +148,16 @@ export interface MovimentacaoEstoque {
   data: string;
   observacao: string | null;
 }
+
+export interface Despesa {
+  id: number;
+  data: string;
+  categoria: string;
+  descricao: string;
+  valor: number;
+  forma_pagamento: string | null;
+  insumo_id: number | null;
+  observacoes: string | null;
+  created_at: string;
+  updated_at: string;
+}
