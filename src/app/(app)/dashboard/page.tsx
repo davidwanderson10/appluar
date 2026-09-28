@@ -57,6 +57,23 @@ export default async function DashboardPage({
     0
   );
 
+  let despesasQuery = supabase.from("despesas").select("*");
+  if (params.inicio) despesasQuery = despesasQuery.gte("data", params.inicio);
+  if (params.fim) despesasQuery = despesasQuery.lte("data", params.fim);
+  const { data: despesas } = await despesasQuery;
+  const listaDespesas = despesas ?? [];
+  const despesasTotal = listaDespesas.reduce((acc, d) => acc + Number(d.valor), 0);
+  const resultado = faturamentoTotal - despesasTotal;
+
+  const despesasPorCategoria = Object.entries(
+    listaDespesas.reduce<Record<string, number>>((acc, d) => {
+      acc[d.categoria] = (acc[d.categoria] ?? 0) + Number(d.valor);
+      return acc;
+    }, {})
+  )
+    .map(([categoria, valor]) => ({ categoria, valor }))
+    .sort((a, b) => b.valor - a.valor);
+
   const { count: clientesCadastrados } = await supabase
     .from("clientes")
     .select("id", { count: "exact", head: true })
@@ -106,6 +123,12 @@ export default async function DashboardPage({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard label="Total de Pedidos" value={String(lista.length)} />
           <StatCard label="Faturamento (não cancelados)" value={formatBRL(faturamentoTotal)} />
+          <StatCard label="Despesas do Período" value={formatBRL(despesasTotal)} />
+          <StatCard
+            label="Resultado (Faturamento − Despesas)"
+            value={formatBRL(resultado)}
+            hint={resultado >= 0 ? "Saldo positivo" : "Saldo negativo"}
+          />
           <StatCard label="Pedidos Entregues" value={String(pedidosEntregues)} />
           <StatCard label="Valor Pendente a Receber" value={formatBRL(valorPendente)} />
           <StatCard label="Clientes Cadastrados" value={String(clientesCadastrados ?? 0)} />
@@ -136,6 +159,24 @@ export default async function DashboardPage({
             </ul>
           </Card>
         </div>
+
+        <Card className="mt-6">
+          <div className="mb-4 flex items-center justify-between">
+            <CardTitle className="mb-0">Despesas por categoria</CardTitle>
+            <Link href="/despesas" className="text-sm text-accent hover:underline">
+              Ver todas
+            </Link>
+          </div>
+          {despesasPorCategoria.length === 0 && <p className="text-sm text-muted">Nenhuma despesa no período.</p>}
+          <ul className="space-y-2">
+            {despesasPorCategoria.map((d) => (
+              <li key={d.categoria} className="flex items-center justify-between text-sm">
+                <span className="text-muted">{d.categoria}</span>
+                <span className="font-medium text-text">{formatBRL(d.valor)}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
       </div>
     </div>
   );
