@@ -41,6 +41,20 @@ export async function createCliente(formData: FormData) {
   redirect(`/clientes/${data.id}`);
 }
 
+// Cadastro rápido, usado no seletor de cliente ao criar um pedido/orçamento sem sair da tela.
+export async function createClienteQuick(formData: FormData) {
+  const supabase = await createClient();
+  const nome = String(formData.get("nome") ?? "").trim();
+  if (!nome) throw new Error("Nome é obrigatório");
+  const telefone = String(formData.get("telefone") || "").trim() || null;
+
+  const { data, error } = await supabase.from("clientes").insert({ nome, telefone }).select("id, nome").single();
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/clientes");
+  return data;
+}
+
 export async function updateCliente(id: number, formData: FormData) {
   const supabase = await createClient();
   const cliente = clienteFromForm(formData);

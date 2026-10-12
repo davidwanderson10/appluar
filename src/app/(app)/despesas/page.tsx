@@ -2,22 +2,27 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { FilterBar } from "@/components/FilterBar";
+import { SortableHeader } from "@/components/SortableHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
 import { RowActions } from "@/components/RowActions";
 import { formatBRL, formatDate } from "@/lib/format";
+import { resolveSort } from "@/lib/sort";
 import { deleteDespesa } from "./actions";
+
+const SORT_FIELDS = ["id", "data", "categoria", "descricao", "forma_pagamento", "valor"] as const;
 
 export default async function DespesasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ categoria?: string; inicio?: string; fim?: string }>;
+  searchParams: Promise<{ categoria?: string; inicio?: string; fim?: string; sort?: string; dir?: string }>;
 }) {
   const params = await searchParams;
   const supabase = await createClient();
+  const sort = resolveSort(params.sort, params.dir, SORT_FIELDS, "data");
 
-  let query = supabase.from("despesas").select("*").order("data", { ascending: false });
+  let query = supabase.from("despesas").select("*").order(sort.field, { ascending: sort.ascending });
   if (params.categoria) query = query.eq("categoria", params.categoria);
   if (params.inicio) query = query.gte("data", params.inicio);
   if (params.fim) query = query.lte("data", params.fim);
@@ -25,6 +30,10 @@ export default async function DespesasPage({
   const { data: despesas } = await query;
   const lista = despesas ?? [];
   const total = lista.reduce((acc, d) => acc + Number(d.valor), 0);
+
+  const th = (label: string, field: (typeof SORT_FIELDS)[number], align?: "right") => (
+    <SortableHeader label={label} field={field} action="/despesas" params={params} align={align} />
+  );
 
   const { data: categoriasData } = await supabase.from("despesas").select("categoria");
   const categorias = Array.from(new Set((categoriasData ?? []).map((c) => c.categoria))).sort();
@@ -69,11 +78,12 @@ export default async function DespesasPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted">
-                <th className="px-4 py-3">Data</th>
-                <th className="px-4 py-3">Categoria</th>
-                <th className="px-4 py-3">Descrição</th>
-                <th className="px-4 py-3">Pagamento</th>
-                <th className="px-4 py-3 text-right">Valor</th>
+                <th className="px-4 py-3">{th("ID", "id")}</th>
+                <th className="px-4 py-3">{th("Data", "data")}</th>
+                <th className="px-4 py-3">{th("Categoria", "categoria")}</th>
+                <th className="px-4 py-3">{th("Descrição", "descricao")}</th>
+                <th className="px-4 py-3">{th("Pagamento", "forma_pagamento")}</th>
+                <th className="px-4 py-3 text-right">{th("Valor", "valor", "right")}</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -82,6 +92,7 @@ export default async function DespesasPage({
                 const deleteWithId = deleteDespesa.bind(null, d.id);
                 return (
                   <tr key={d.id} className="border-b border-border last:border-0 hover:bg-border/20">
+                    <td className="px-4 py-3 text-muted">#{d.id}</td>
                     <td className="px-4 py-3 text-muted">{formatDate(d.data)}</td>
                     <td className="px-4 py-3">
                       <Badge tone={d.categoria === "Insumos" ? "neutral" : "accent"}>{d.categoria}</Badge>
@@ -105,7 +116,7 @@ export default async function DespesasPage({
               })}
               {lista.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted">
                     Nenhuma despesa encontrada.
                   </td>
                 </tr>

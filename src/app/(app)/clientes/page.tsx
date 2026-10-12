@@ -2,26 +2,35 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { FilterBar } from "@/components/FilterBar";
+import { SortableHeader } from "@/components/SortableHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
 import { RowActions } from "@/components/RowActions";
+import { resolveSort } from "@/lib/sort";
 import { deleteCliente } from "./actions";
+
+const SORT_FIELDS = ["id", "nome", "telefone", "cidade", "tipo", "categoria", "status"] as const;
 
 export default async function ClientesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; erro?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; erro?: string; sort?: string; dir?: string }>;
 }) {
   const params = await searchParams;
   const supabase = await createClient();
+  const sort = resolveSort(params.sort, params.dir, SORT_FIELDS, "nome");
 
-  let query = supabase.from("clientes").select("*").order("nome");
+  let query = supabase.from("clientes").select("*").order(sort.field, { ascending: sort.ascending });
   if (params.q) query = query.ilike("nome", `%${params.q}%`);
   if (params.status) query = query.eq("status", params.status);
 
   const { data: clientes } = await query;
   const lista = clientes ?? [];
+
+  const th = (label: string, field: (typeof SORT_FIELDS)[number], align?: "right") => (
+    <SortableHeader label={label} field={field} action="/clientes" params={params} align={align} />
+  );
 
   return (
     <div>
@@ -73,12 +82,13 @@ export default async function ClientesPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted">
-                <th className="px-4 py-3">Nome</th>
-                <th className="px-4 py-3">Telefone</th>
-                <th className="px-4 py-3">Cidade/UF</th>
-                <th className="px-4 py-3">Tipo</th>
-                <th className="px-4 py-3">Categoria</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">{th("ID", "id")}</th>
+                <th className="px-4 py-3">{th("Nome", "nome")}</th>
+                <th className="px-4 py-3">{th("Telefone", "telefone")}</th>
+                <th className="px-4 py-3">{th("Cidade/UF", "cidade")}</th>
+                <th className="px-4 py-3">{th("Tipo", "tipo")}</th>
+                <th className="px-4 py-3">{th("Categoria", "categoria")}</th>
+                <th className="px-4 py-3">{th("Status", "status")}</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -87,6 +97,7 @@ export default async function ClientesPage({
                 const deleteWithId = deleteCliente.bind(null, c.id);
                 return (
                   <tr key={c.id} className="border-b border-border last:border-0 hover:bg-border/20">
+                    <td className="px-4 py-3 text-muted">#{c.id}</td>
                     <td className="px-4 py-3">
                       <Link href={`/clientes/${c.id}`} className="font-medium text-text hover:text-accent">
                         {c.nome}
@@ -113,7 +124,7 @@ export default async function ClientesPage({
               })}
               {lista.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted">
+                  <td colSpan={8} className="px-4 py-8 text-center text-muted">
                     Nenhum cliente encontrado.
                   </td>
                 </tr>

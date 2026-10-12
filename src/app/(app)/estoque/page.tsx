@@ -6,14 +6,24 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
 import { RowActions } from "@/components/RowActions";
+import { SortableHeader } from "@/components/SortableHeader";
 import { formatBRL, formatDateTime } from "@/lib/format";
+import { resolveSort } from "@/lib/sort";
 import { createInsumo, registrarMovimentacao, deleteInsumo } from "./actions";
 
-export default async function EstoquePage() {
+const SORT_FIELDS = ["id", "nome", "material", "quantidade_estoque"] as const;
+
+export default async function EstoquePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string; dir?: string }>;
+}) {
+  const params = await searchParams;
   const supabase = await createClient();
+  const sort = resolveSort(params.sort, params.dir, SORT_FIELDS, "nome");
 
   const [{ data: insumos }, { data: movimentacoes }] = await Promise.all([
-    supabase.from("insumos").select("*").order("nome"),
+    supabase.from("insumos").select("*").order(sort.field, { ascending: sort.ascending }),
     supabase
       .from("movimentacoes_estoque")
       .select("*, insumos(nome)")
@@ -22,6 +32,10 @@ export default async function EstoquePage() {
   ]);
 
   const lista = insumos ?? [];
+
+  const th = (label: string, field: (typeof SORT_FIELDS)[number], align?: "right") => (
+    <SortableHeader label={label} field={field} action="/estoque" params={params} align={align} />
+  );
 
   return (
     <div>
@@ -50,9 +64,10 @@ export default async function EstoquePage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs uppercase text-muted">
-                  <th className="px-4 py-3">Insumo</th>
-                  <th className="px-4 py-3">Material/Cor</th>
-                  <th className="px-4 py-3 text-right">Estoque</th>
+                  <th className="px-4 py-3">{th("ID", "id")}</th>
+                  <th className="px-4 py-3">{th("Insumo", "nome")}</th>
+                  <th className="px-4 py-3">{th("Material/Cor", "material")}</th>
+                  <th className="px-4 py-3 text-right">{th("Estoque", "quantidade_estoque", "right")}</th>
                   <th className="px-4 py-3">Movimentar</th>
                   <th className="px-4 py-3"></th>
                 </tr>
@@ -64,6 +79,7 @@ export default async function EstoquePage() {
                   const deleteWithId = deleteInsumo.bind(null, i.id);
                   return (
                     <tr key={i.id} className="border-b border-border last:border-0">
+                      <td className="px-4 py-3 text-muted">#{i.id}</td>
                       <td className="px-4 py-3">
                         <p className="font-medium text-text">{i.nome}</p>
                         <p className="text-xs text-muted">{i.tipo}</p>
@@ -109,7 +125,7 @@ export default async function EstoquePage() {
                 })}
                 {lista.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-muted">
+                    <td colSpan={6} className="px-4 py-8 text-center text-muted">
                       Nenhum insumo cadastrado.
                     </td>
                   </tr>

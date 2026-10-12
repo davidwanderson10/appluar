@@ -2,28 +2,36 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { FilterBar } from "@/components/FilterBar";
+import { SortableHeader } from "@/components/SortableHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { StatusOrcamentoBadge } from "@/components/ui/Badge";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
 import { RowActions } from "@/components/RowActions";
 import { formatBRL, formatDate } from "@/lib/format";
+import { resolveSort } from "@/lib/sort";
 import { deleteOrcamento } from "./actions";
 
 const STATUS_OPTIONS = ["Enviado", "Aprovado", "Recusado", "Convertido"];
+const SORT_FIELDS = ["id", "cliente_nome", "data", "validade", "status", "venda_total"] as const;
 
 export default async function OrcamentosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; sort?: string; dir?: string }>;
 }) {
   const params = await searchParams;
   const supabase = await createClient();
+  const sort = resolveSort(params.sort, params.dir, SORT_FIELDS, "data");
 
-  let query = supabase.from("orcamentos_resumo").select("*").order("data", { ascending: false });
+  let query = supabase.from("orcamentos_resumo").select("*").order(sort.field, { ascending: sort.ascending });
   if (params.status) query = query.eq("status", params.status);
 
   const { data: orcamentos } = await query;
   const lista = orcamentos ?? [];
+
+  const th = (label: string, field: (typeof SORT_FIELDS)[number], align?: "right") => (
+    <SortableHeader label={label} field={field} action="/orcamentos" params={params} align={align} />
+  );
 
   return (
     <div>
@@ -56,12 +64,12 @@ export default async function OrcamentosPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted">
-                <th className="px-4 py-3">Nº</th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Data</th>
-                <th className="px-4 py-3">Validade</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Valor</th>
+                <th className="px-4 py-3">{th("Nº", "id")}</th>
+                <th className="px-4 py-3">{th("Cliente", "cliente_nome")}</th>
+                <th className="px-4 py-3">{th("Data", "data")}</th>
+                <th className="px-4 py-3">{th("Validade", "validade")}</th>
+                <th className="px-4 py-3">{th("Status", "status")}</th>
+                <th className="px-4 py-3 text-right">{th("Valor", "venda_total", "right")}</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>

@@ -2,26 +2,37 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TopBar } from "@/components/TopBar";
 import { FilterBar } from "@/components/FilterBar";
+import { SortableHeader } from "@/components/SortableHeader";
 import { LinkButton } from "@/components/ui/Button";
 import { StatusPedidoBadge } from "@/components/ui/Badge";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
 import { RowActions } from "@/components/RowActions";
 import { formatBRL, formatDate, formatPercent } from "@/lib/format";
+import { resolveSort } from "@/lib/sort";
 import { deletePedido } from "./actions";
 
 const STATUS_OPTIONS = ["Aguardando", "Em Impressão", "Pós-Processamento", "Pronto", "Entregue", "Cancelado"];
+const SORT_FIELDS = ["id", "cliente_nome", "data_pedido", "prazo_entrega", "status", "venda_total"] as const;
 
 export default async function PedidosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; cliente_id?: string; inicio?: string; fim?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    cliente_id?: string;
+    inicio?: string;
+    fim?: string;
+    sort?: string;
+    dir?: string;
+  }>;
 }) {
   const params = await searchParams;
   const supabase = await createClient();
+  const sort = resolveSort(params.sort, params.dir, SORT_FIELDS, "data_pedido");
 
   const { data: clientesOptions } = await supabase.from("clientes").select("id, nome").order("nome");
 
-  let query = supabase.from("pedidos_resumo").select("*").order("data_pedido", { ascending: false });
+  let query = supabase.from("pedidos_resumo").select("*").order(sort.field, { ascending: sort.ascending });
   if (params.status) query = query.eq("status", params.status);
   if (params.cliente_id) query = query.eq("cliente_id", params.cliente_id);
   if (params.inicio) query = query.gte("data_pedido", params.inicio);
@@ -29,6 +40,10 @@ export default async function PedidosPage({
 
   const { data: pedidos } = await query;
   const lista = pedidos ?? [];
+
+  const th = (label: string, field: (typeof SORT_FIELDS)[number], align?: "right") => (
+    <SortableHeader label={label} field={field} action="/pedidos" params={params} align={align} />
+  );
 
   return (
     <div>
@@ -74,12 +89,12 @@ export default async function PedidosPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase text-muted">
-                <th className="px-4 py-3">Nº</th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Data</th>
-                <th className="px-4 py-3">Prazo</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Valor</th>
+                <th className="px-4 py-3">{th("Nº", "id")}</th>
+                <th className="px-4 py-3">{th("Cliente", "cliente_nome")}</th>
+                <th className="px-4 py-3">{th("Data", "data_pedido")}</th>
+                <th className="px-4 py-3">{th("Prazo", "prazo_entrega")}</th>
+                <th className="px-4 py-3">{th("Status", "status")}</th>
+                <th className="px-4 py-3 text-right">{th("Valor", "venda_total", "right")}</th>
                 <th className="px-4 py-3 text-right">Margem</th>
                 <th className="px-4 py-3"></th>
               </tr>

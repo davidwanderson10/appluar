@@ -18,8 +18,14 @@ export function FilterBar({
   fields: FilterField[];
   values: Record<string, string | undefined>;
 }) {
+  const fieldNames = new Set(fields.map((f) => f.name));
+  const extras = Object.entries(values).filter(([name, v]) => v && !fieldNames.has(name));
+
   return (
     <form action={action} method="get" className="mb-5 flex flex-wrap items-end gap-3">
+      {extras.map(([name, v]) => (
+        <input key={name} type="hidden" name={name} value={v} />
+      ))}
       {fields.map((field) => (
         <div key={field.name} className="min-w-[160px]">
           <label className="mb-1 block text-xs font-medium text-muted">{field.label}</label>
