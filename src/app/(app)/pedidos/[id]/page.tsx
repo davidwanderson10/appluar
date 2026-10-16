@@ -7,9 +7,10 @@ import { Input, Select, Textarea, Label, FieldGroup } from "@/components/ui/Fiel
 import { Button } from "@/components/ui/Button";
 import { StatusPedidoBadge } from "@/components/ui/Badge";
 import { AddItemPedidoForm } from "@/components/AddItemPedidoForm";
+import { ItemLinhaEditavel } from "@/components/ItemLinhaEditavel";
 import { formatBRL, formatPercent } from "@/lib/format";
 import { calcularResultado } from "@/lib/calculations";
-import { updatePedido, addItemPedido, removeItemPedido } from "../actions";
+import { updatePedido, addItemPedido, updateItemPedido, removeItemPedido } from "../actions";
 
 const STATUS_OPTIONS = ["Aguardando", "Em Impressão", "Pós-Processamento", "Pronto", "Entregue", "Cancelado"];
 
@@ -42,44 +43,22 @@ export default async function PedidoDetalhePage({ params }: { params: Promise<{ 
               <CardTitle className="mb-0">Itens</CardTitle>
               <StatusPedidoBadge status={pedido.status} />
             </div>
-            <div className="mb-4 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left text-xs uppercase text-muted">
-                    <th className="py-2">Item</th>
-                    <th className="py-2">Qtd</th>
-                    <th className="py-2">Material/Cor</th>
-                    <th className="py-2 text-right">Custo</th>
-                    <th className="py-2 text-right">Valor</th>
-                    <th className="py-2"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listaItens.map((item) => (
-                    <tr key={item.id} className="border-b border-border last:border-0">
-                      <td className="py-2">{item.nome_avulso ?? produtos?.find((p) => p.id === item.produto_id)?.nome ?? "—"}</td>
-                      <td className="py-2">{item.quantidade}</td>
-                      <td className="py-2 text-muted">{[item.material, item.cor].filter(Boolean).join(" / ") || "—"}</td>
-                      <td className="py-2 text-right">{formatBRL(item.custo_unitario * item.quantidade)}</td>
-                      <td className="py-2 text-right font-medium">{formatBRL(item.valor_unitario * item.quantidade)}</td>
-                      <td className="py-2 text-right">
-                        <form action={removeItemPedido.bind(null, pedido.id, item.id)}>
-                          <button type="submit" className="text-xs text-red-500 hover:underline">
-                            remover
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  ))}
-                  {listaItens.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="py-4 text-center text-muted">
-                        Nenhum item.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="mb-4 space-y-3">
+              {listaItens.map((item) => {
+                const nome = item.nome_avulso ?? produtos?.find((p) => p.id === item.produto_id)?.nome ?? "Item";
+                const updateItemWithId = updateItemPedido.bind(null, pedido.id, item.id);
+                const removeItemWithId = removeItemPedido.bind(null, pedido.id, item.id);
+                return (
+                  <ItemLinhaEditavel
+                    key={item.id}
+                    nome={nome}
+                    item={item}
+                    updateAction={updateItemWithId}
+                    removeAction={removeItemWithId}
+                  />
+                );
+              })}
+              {listaItens.length === 0 && <p className="text-sm text-muted">Nenhum item.</p>}
             </div>
 
             <div className="mb-4 grid grid-cols-2 gap-4 rounded-lg border border-border bg-border/10 p-4 text-sm sm:grid-cols-4">
@@ -131,6 +110,10 @@ export default async function PedidoDetalhePage({ params }: { params: Promise<{ 
                     <option key={s}>{s}</option>
                   ))}
                 </Select>
+              </FieldGroup>
+              <FieldGroup>
+                <Label htmlFor="data_pedido">Data do pedido</Label>
+                <Input id="data_pedido" name="data_pedido" type="date" defaultValue={pedido.data_pedido} />
               </FieldGroup>
               <FieldGroup>
                 <Label htmlFor="prazo_entrega">Prazo de entrega</Label>

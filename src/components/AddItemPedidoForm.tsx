@@ -11,9 +11,11 @@ const AVULSO = "avulso";
 export function AddItemPedidoForm({
   produtos,
   action,
+  label = "+ Adicionar item ao pedido",
 }: {
   produtos: ProdutoOpcao[];
   action: (formData: FormData) => void;
+  label?: string;
 }) {
   const [produtoId, setProdutoId] = useState("");
   const [nomeAvulso, setNomeAvulso] = useState("");
@@ -78,7 +80,7 @@ export function AddItemPedidoForm({
         </div>
       </div>
       <Button type="submit" variant="secondary">
-        + Adicionar item ao pedido
+        {label}
       </Button>
     </form>
   );

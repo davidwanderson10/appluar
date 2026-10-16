@@ -82,6 +82,7 @@ export async function updatePedido(id: number, formData: FormData) {
     .from("pedidos")
     .update({
       status,
+      data_pedido: String(formData.get("data_pedido") || new Date().toISOString().slice(0, 10)),
       prazo_entrega: String(formData.get("prazo_entrega") || "") || null,
       data_entrega,
       forma_pagamento: String(formData.get("forma_pagamento") || "") || null,
@@ -123,6 +124,51 @@ export async function addItemPedido(pedidoId: number, formData: FormData) {
       .from("itens_pedido")
       .update({ insumo_id: baixa.insumoId, quantidade_baixada: baixa.quantidadeBaixada })
       .eq("id", itemInserido.id);
+  }
+
+  revalidatePath(`/pedidos/${pedidoId}`);
+  revalidatePath("/estoque");
+}
+
+export async function updateItemPedido(pedidoId: number, itemId: number, formData: FormData) {
+  const supabase = await createClient();
+
+  const { data: itemAtual } = await supabase
+    .from("itens_pedido")
+    .select("produto_id, insumo_id, quantidade_baixada")
+    .eq("id", itemId)
+    .single();
+  if (!itemAtual) throw new Error("Item não encontrado");
+
+  // Estorna a baixa de estoque anterior (se houve) antes de recalcular com os novos valores.
+  if (itemAtual.insumo_id && itemAtual.quantidade_baixada) {
+    await estornarEstoque(supabase, { insumoId: itemAtual.insumo_id, quantidade: itemAtual.quantidade_baixada, pedidoId });
+  }
+
+  const quantidade = Number(formData.get("quantidade") || 1);
+  const material = String(formData.get("material") || "") || null;
+  const cor = String(formData.get("cor") || "") || null;
+  const custo_unitario = Number(formData.get("custo_unitario") || 0);
+  const valor_unitario = Number(formData.get("valor_unitario") || 0);
+
+  const { error } = await supabase
+    .from("itens_pedido")
+    .update({ quantidade, material, cor, custo_unitario, valor_unitario, insumo_id: null, quantidade_baixada: null })
+    .eq("id", itemId);
+  if (error) throw new Error(error.message);
+
+  const baixa = await baixarEstoquePorItem(supabase, {
+    produtoId: itemAtual.produto_id,
+    material,
+    cor,
+    quantidade,
+    pedidoId,
+  });
+  if (baixa) {
+    await supabase
+      .from("itens_pedido")
+      .update({ insumo_id: baixa.insumoId, quantidade_baixada: baixa.quantidadeBaixada })
+      .eq("id", itemId);
   }
 
   revalidatePath(`/pedidos/${pedidoId}`);

@@ -6,9 +6,17 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Input, Select, Textarea, Label, FieldGroup } from "@/components/ui/Field";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { StatusOrcamentoBadge } from "@/components/ui/Badge";
-import { formatBRL, formatDate, formatPercent } from "@/lib/format";
+import { AddItemPedidoForm } from "@/components/AddItemPedidoForm";
+import { ItemLinhaEditavel } from "@/components/ItemLinhaEditavel";
+import { formatBRL, formatPercent } from "@/lib/format";
 import { calcularResultado } from "@/lib/calculations";
-import { updateOrcamentoStatus, converterEmPedido } from "../actions";
+import {
+  updateOrcamentoStatus,
+  converterEmPedido,
+  addItemOrcamento,
+  updateItemOrcamento,
+  removeItemOrcamento,
+} from "../actions";
 
 const STATUS_OPTIONS = ["Enviado", "Aprovado", "Recusado", "Convertido"];
 
@@ -19,9 +27,10 @@ export default async function OrcamentoDetalhePage({ params }: { params: Promise
   const { data: orcamento } = await supabase.from("orcamentos_resumo").select("*").eq("id", id).single();
   if (!orcamento) notFound();
 
-  const [{ data: itens }, { data: cliente }] = await Promise.all([
+  const [{ data: itens }, { data: cliente }, { data: produtos }] = await Promise.all([
     supabase.from("itens_orcamento").select("*").eq("orcamento_id", id).order("id"),
     supabase.from("clientes").select("*").eq("id", orcamento.cliente_id).single(),
+    supabase.from("produtos").select("id, nome, material, cor, custo, preco_venda").eq("ativo", true).order("nome"),
   ]);
 
   const produtoIds = (itens ?? []).map((i) => i.produto_id).filter((v): v is number => v != null);
@@ -34,6 +43,8 @@ export default async function OrcamentoDetalhePage({ params }: { params: Promise
   const listaItens = itens ?? [];
   const updateWithId = updateOrcamentoStatus.bind(null, orcamento.id);
   const converterWithId = converterEmPedido.bind(null, orcamento.id);
+  const addItemWithId = addItemOrcamento.bind(null, orcamento.id);
+  const editavel = orcamento.status !== "Convertido";
 
   return (
     <div>
@@ -50,30 +61,30 @@ export default async function OrcamentoDetalhePage({ params }: { params: Promise
                 </LinkButton>
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left text-xs uppercase text-muted">
-                    <th className="py-2">Item</th>
-                    <th className="py-2">Qtd</th>
-                    <th className="py-2">Material/Cor</th>
-                    <th className="py-2 text-right">Valor</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listaItens.map((item) => (
-                    <tr key={item.id} className="border-b border-border last:border-0">
-                      <td className="py-2">
-                        {item.nome_avulso ?? (item.produto_id ? nomeProduto.get(item.produto_id) : null) ?? "Item"}
-                      </td>
-                      <td className="py-2">{item.quantidade}</td>
-                      <td className="py-2 text-muted">{[item.material, item.cor].filter(Boolean).join(" / ") || "—"}</td>
-                      <td className="py-2 text-right font-medium">{formatBRL(item.valor_unitario * item.quantidade)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+            <div className="space-y-3">
+              {listaItens.map((item) => {
+                const nome = item.nome_avulso ?? (item.produto_id ? nomeProduto.get(item.produto_id) : null) ?? "Item";
+                const updateItemWithId = updateItemOrcamento.bind(null, orcamento.id, item.id);
+                const removeItemWithId = removeItemOrcamento.bind(null, orcamento.id, item.id);
+                return (
+                  <ItemLinhaEditavel
+                    key={item.id}
+                    nome={nome}
+                    item={item}
+                    updateAction={updateItemWithId}
+                    removeAction={removeItemWithId}
+                  />
+                );
+              })}
+              {listaItens.length === 0 && <p className="text-sm text-muted">Nenhum item.</p>}
             </div>
+
+            {editavel && (
+              <div className="mt-4">
+                <AddItemPedidoForm produtos={produtos ?? []} action={addItemWithId} label="+ Adicionar item ao orçamento" />
+              </div>
+            )}
 
             <div className="mt-4 grid grid-cols-2 gap-4 rounded-lg border border-border bg-border/10 p-4 text-sm sm:grid-cols-4">
               <div>
@@ -128,6 +139,10 @@ export default async function OrcamentoDetalhePage({ params }: { params: Promise
                     <option key={s}>{s}</option>
                   ))}
                 </Select>
+              </FieldGroup>
+              <FieldGroup>
+                <Label htmlFor="data">Data</Label>
+                <Input id="data" name="data" type="date" defaultValue={orcamento.data} />
               </FieldGroup>
               <FieldGroup>
                 <Label htmlFor="validade">Válido até</Label>

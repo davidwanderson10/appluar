@@ -54,6 +54,7 @@ export async function updateOrcamentoStatus(id: number, formData: FormData) {
     .from("orcamentos")
     .update({
       status: String(formData.get("status") || "Enviado"),
+      data: String(formData.get("data") || new Date().toISOString().slice(0, 10)),
       validade: String(formData.get("validade") || "") || null,
       observacoes: String(formData.get("observacoes") || "") || null,
     })
@@ -63,6 +64,52 @@ export async function updateOrcamentoStatus(id: number, formData: FormData) {
   revalidatePath("/orcamentos");
   revalidatePath(`/orcamentos/${id}`);
   redirect(`/orcamentos/${id}`);
+}
+
+export async function addItemOrcamento(orcamentoId: number, formData: FormData) {
+  const supabase = await createClient();
+
+  const produto_id = formData.get("produto_id") ? Number(formData.get("produto_id")) : null;
+  const nome_avulso = String(formData.get("nome_avulso") || "") || null;
+  const quantidade = Number(formData.get("quantidade") || 1);
+  const material = String(formData.get("material") || "") || null;
+  const cor = String(formData.get("cor") || "") || null;
+  const custo_unitario = Number(formData.get("custo_unitario") || 0);
+  const valor_unitario = Number(formData.get("valor_unitario") || 0);
+
+  if (!produto_id && !nome_avulso) throw new Error("Informe um produto ou nome do item");
+
+  const { error } = await supabase
+    .from("itens_orcamento")
+    .insert({ orcamento_id: orcamentoId, produto_id, nome_avulso, quantidade, material, cor, custo_unitario, valor_unitario });
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/orcamentos/${orcamentoId}`);
+}
+
+export async function updateItemOrcamento(orcamentoId: number, itemId: number, formData: FormData) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("itens_orcamento")
+    .update({
+      quantidade: Number(formData.get("quantidade") || 1),
+      material: String(formData.get("material") || "") || null,
+      cor: String(formData.get("cor") || "") || null,
+      custo_unitario: Number(formData.get("custo_unitario") || 0),
+      valor_unitario: Number(formData.get("valor_unitario") || 0),
+    })
+    .eq("id", itemId);
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/orcamentos/${orcamentoId}`);
+}
+
+export async function removeItemOrcamento(orcamentoId: number, itemId: number) {
+  const supabase = await createClient();
+  await supabase.from("itens_orcamento").delete().eq("id", itemId);
+
+  revalidatePath(`/orcamentos/${orcamentoId}`);
 }
 
 export async function converterEmPedido(orcamentoId: number) {
