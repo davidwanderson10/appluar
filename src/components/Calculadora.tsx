@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Input, Label, FieldGroup } from "@/components/ui/Field";
+import { DurationHoursInput } from "@/components/DurationHoursInput";
 import { calcularPrecificacao, type ParametrosCalculadora } from "@/lib/calculations";
 import { formatBRL } from "@/lib/format";
 
@@ -24,8 +25,8 @@ export function Calculadora({ parametrosIniciais }: { parametrosIniciais: Parame
           <CardTitle>Sua peça</CardTitle>
           <div className="grid grid-cols-2 gap-4">
             <FieldGroup className="mb-0">
-              <Label>Duração da impressão (h)</Label>
-              <Input type="number" step="0.1" value={tempoImpressaoH} onChange={(e) => setTempoImpressaoH(Number(e.target.value) || 0)} />
+              <Label>Duração da impressão</Label>
+              <DurationHoursInput value={tempoImpressaoH} onChange={setTempoImpressaoH} />
             </FieldGroup>
             <FieldGroup className="mb-0">
               <Label>Filamento usado (g)</Label>

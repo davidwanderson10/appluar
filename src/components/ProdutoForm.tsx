@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Input, Select, Textarea, Label, FieldGroup } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
+import { DurationHoursInput } from "@/components/DurationHoursInput";
 import { calcularResultado, vendaPorLucro, vendaPorMargem } from "@/lib/calculations";
 import type { Produto } from "@/types/database";
 
@@ -28,6 +29,7 @@ export function ProdutoForm({
 }) {
   const [custo, setCusto] = useState(produto?.custo ?? 0);
   const [precoVenda, setPrecoVenda] = useState(produto?.preco_venda ?? 0);
+  const [tempoImpressaoH, setTempoImpressaoH] = useState(produto?.tempo_impressao_h ?? 0);
 
   const resultado = calcularResultado(custo, precoVenda);
 
@@ -89,8 +91,8 @@ export function ProdutoForm({
         </FieldGroup>
 
         <FieldGroup>
-          <Label htmlFor="tempo_impressao_h">Tempo de impressão (h)</Label>
-          <Input id="tempo_impressao_h" name="tempo_impressao_h" type="number" step="0.1" defaultValue={produto?.tempo_impressao_h ?? ""} />
+          <Label htmlFor="tempo_impressao_h">Tempo de impressão</Label>
+          <DurationHoursInput value={tempoImpressaoH} onChange={setTempoImpressaoH} name="tempo_impressao_h" />
         </FieldGroup>
 
         <FieldGroup>
