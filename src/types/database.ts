@@ -83,6 +83,19 @@ export interface ItemPedido {
   created_at: string;
 }
 
+export interface PerdaProducao {
+  id: number;
+  pedido_id: number;
+  item_pedido_id: number | null;
+  data: string;
+  percentual_concluido: number | null;
+  descricao: string;
+  valor: number;
+  despesa_id: number | null;
+  observacoes: string | null;
+  created_at: string;
+}
+
 export interface Orcamento {
   id: number;
   cliente_id: number;

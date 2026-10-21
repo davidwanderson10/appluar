@@ -194,6 +194,70 @@ export async function removeItemPedido(pedidoId: number, itemId: number) {
   revalidatePath("/estoque");
 }
 
+// Perda de produção (peça falhou/descolou no meio da impressão). Gera uma despesa automática
+// (categoria "Perdas de produção") pra entrar no relatório mensal, mesmo padrão já usado quando
+// uma compra de insumo em Estoque vira despesa.
+export async function createPerdaPedido(pedidoId: number, formData: FormData) {
+  const supabase = await createClient();
+
+  const descricao = String(formData.get("descricao") ?? "").trim();
+  if (!descricao) throw new Error("Descreva o que aconteceu");
+
+  const valor = Number(formData.get("valor") || 0);
+  const percentualRaw = formData.get("percentual_concluido");
+  const percentual_concluido = percentualRaw && String(percentualRaw) !== "" ? Number(percentualRaw) : null;
+  const item_pedido_id = formData.get("item_pedido_id") ? Number(formData.get("item_pedido_id")) : null;
+  const observacoes = String(formData.get("observacoes") || "") || null;
+
+  let despesaId: number | null = null;
+  if (valor > 0) {
+    const { data: despesa } = await supabase
+      .from("despesas")
+      .insert({
+        categoria: "Perdas de produção",
+        descricao: `Pedido #${pedidoId}: ${descricao}`,
+        valor,
+      })
+      .select("id")
+      .single();
+    despesaId = despesa?.id ?? null;
+  }
+
+  const { error } = await supabase.from("perdas_producao").insert({
+    pedido_id: pedidoId,
+    item_pedido_id,
+    percentual_concluido,
+    descricao,
+    valor,
+    despesa_id: despesaId,
+    observacoes,
+  });
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/pedidos/${pedidoId}`);
+  revalidatePath("/despesas");
+  revalidatePath("/dashboard");
+}
+
+export async function deletePerdaPedido(pedidoId: number, perdaId: number) {
+  const supabase = await createClient();
+
+  const { data: perda } = await supabase
+    .from("perdas_producao")
+    .select("despesa_id")
+    .eq("id", perdaId)
+    .single();
+
+  await supabase.from("perdas_producao").delete().eq("id", perdaId);
+  if (perda?.despesa_id) {
+    await supabase.from("despesas").delete().eq("id", perda.despesa_id);
+  }
+
+  revalidatePath(`/pedidos/${pedidoId}`);
+  revalidatePath("/despesas");
+  revalidatePath("/dashboard");
+}
+
 export async function deletePedido(id: number) {
   const supabase = await createClient();
 
@@ -208,9 +272,16 @@ export async function deletePedido(id: number) {
     }
   }
 
+  const { data: perdas } = await supabase.from("perdas_producao").select("despesa_id").eq("pedido_id", id);
+  const despesaIds = (perdas ?? []).map((p) => p.despesa_id).filter((v): v is number => v != null);
+  if (despesaIds.length) {
+    await supabase.from("despesas").delete().in("id", despesaIds);
+  }
+
   await supabase.from("pedidos").delete().eq("id", id);
 
   revalidatePath("/pedidos");
   revalidatePath("/estoque");
+  revalidatePath("/despesas");
   revalidatePath("/dashboard");
 }
