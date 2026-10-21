@@ -38,8 +38,8 @@ export default async function PedidoDetalhePage({ params }: { params: Promise<{ 
   const resultado = calcularResultado(pedido.custo_total, pedido.venda_total);
   const listaItens = itens ?? [];
   const listaPerdas = perdas ?? [];
-  const perdasTotal = listaPerdas.reduce((acc, p) => acc + Number(p.valor), 0);
-  const lucroReal = resultado.lucro - perdasTotal;
+  const perdasTotal = Number(pedido.perdas_total ?? 0);
+  const lucroReal = Number(pedido.lucro_real ?? resultado.lucro);
 
   const updateWithId = updatePedido.bind(null, pedido.id);
   const addItemWithId = addItemPedido.bind(null, pedido.id);

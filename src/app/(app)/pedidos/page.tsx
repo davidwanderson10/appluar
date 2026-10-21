@@ -12,7 +12,7 @@ import { resolveSort } from "@/lib/sort";
 import { deletePedido } from "./actions";
 
 const STATUS_OPTIONS = ["Aguardando", "Em Impressão", "Pós-Processamento", "Pronto", "Entregue", "Cancelado"];
-const SORT_FIELDS = ["id", "cliente_nome", "data_pedido", "prazo_entrega", "status", "venda_total"] as const;
+const SORT_FIELDS = ["id", "cliente_nome", "data_pedido", "prazo_entrega", "status", "venda_total", "lucro_real"] as const;
 
 export default async function PedidosPage({
   searchParams,
@@ -77,7 +77,8 @@ export default async function PedidosPage({
                 Status: p.status,
                 "Valor total": p.venda_total,
                 "Custo total": p.custo_total,
-                "Lucro": p.lucro_total,
+                "Perdas de produção": p.perdas_total,
+                "Lucro real": p.lucro_real,
                 "Valor pago": p.valor_pago,
               }))}
             />
@@ -95,13 +96,14 @@ export default async function PedidosPage({
                 <th className="px-4 py-3">{th("Prazo", "prazo_entrega")}</th>
                 <th className="px-4 py-3">{th("Status", "status")}</th>
                 <th className="px-4 py-3 text-right">{th("Valor", "venda_total", "right")}</th>
+                <th className="px-4 py-3 text-right">{th("Lucro", "lucro_real", "right")}</th>
                 <th className="px-4 py-3 text-right">Margem</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {lista.map((p) => {
-                const margem = p.venda_total > 0 ? p.lucro_total / p.venda_total : 0;
+                const margem = p.venda_total > 0 ? p.lucro_real / p.venda_total : 0;
                 const deleteWithId = deletePedido.bind(null, p.id);
                 return (
                   <tr key={p.id} className="border-b border-border last:border-0 hover:bg-border/20">
@@ -117,6 +119,14 @@ export default async function PedidosPage({
                       <StatusPedidoBadge status={p.status} />
                     </td>
                     <td className="px-4 py-3 text-right font-medium text-text">{formatBRL(p.venda_total)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={p.lucro_real < 0 ? "font-medium text-red-500" : "font-medium text-text"}>
+                        {formatBRL(p.lucro_real)}
+                      </span>
+                      {p.perdas_total > 0 && (
+                        <p className="text-xs text-muted">−{formatBRL(p.perdas_total)} perda</p>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right text-muted">{formatPercent(margem)}</td>
                     <td className="px-4 py-3">
                       <RowActions
@@ -130,7 +140,7 @@ export default async function PedidosPage({
               })}
               {lista.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-muted">
+                  <td colSpan={9} className="px-4 py-8 text-center text-muted">
                     Nenhum pedido encontrado.
                   </td>
                 </tr>
