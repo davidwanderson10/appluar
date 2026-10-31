@@ -94,29 +94,58 @@ export function gerarOrcamentoPdf(orcamento: OrcamentoPdfData, logoPath: string)
     doc.moveTo(MARGIN, y).lineTo(MARGIN + contentWidth, y).strokeColor(BORDER).stroke();
     y += 8;
 
-    const THUMB = 32;
+    // ~5cm — itens com foto ganham um "card" maior (imagem + dados ao lado) em vez da
+    // linha fina da tabela, senão a imagem fica pequena demais pro cliente ver detalhe.
+    const FOTO_GRANDE = 142;
+    const RODAPE_RESERVA = 50;
+
+    function garantirEspaco(altura: number) {
+      if (y + altura > doc.page.height - MARGIN - RODAPE_RESERVA) {
+        doc.addPage();
+        y = MARGIN;
+      }
+    }
+
     for (const item of orcamento.itens) {
       const temFoto = item.fotoBuffer && item.fotoBuffer.length > 0;
-      const linhaY = y;
-      const textX = temFoto ? colItem + THUMB + 8 : colItem;
 
-      if (temFoto) {
-        try {
-          doc.image(item.fotoBuffer as Buffer, colItem, linhaY, { fit: [THUMB, THUMB] });
-        } catch {
-          // imagem inválida/corrompida — ignora e segue sem a miniatura
-        }
+      if (!temFoto) {
+        garantirEspaco(20);
+        const linhaY = y;
+        doc.fontSize(10).fillColor(TEXT).text(item.nome, colItem, linhaY, { width: colQtd - colItem });
+        doc.text(String(item.quantidade), colQtd, linhaY, { width: colUnit - colQtd, align: "center" });
+        doc.text(formatBRL(item.valorUnitario), colUnit, linhaY, { width: colTotal - colUnit, align: "right" });
+        doc.text(formatBRL(item.valorUnitario * item.quantidade), colTotal, linhaY, {
+          width: MARGIN + contentWidth - colTotal,
+          align: "right",
+        });
+        y = linhaY + 20;
+        doc.moveTo(MARGIN, y - 6).lineTo(MARGIN + contentWidth, y - 6).strokeColor(BORDER).stroke();
+        continue;
       }
 
-      doc.fontSize(10).fillColor(TEXT).text(item.nome, textX, linhaY, { width: colQtd - textX });
-      doc.text(String(item.quantidade), colQtd, linhaY, { width: colUnit - colQtd, align: "center" });
-      doc.text(formatBRL(item.valorUnitario), colUnit, linhaY, { width: colTotal - colUnit, align: "right" });
-      doc.text(formatBRL(item.valorUnitario * item.quantidade), colTotal, linhaY, {
-        width: MARGIN + contentWidth - colTotal,
-        align: "right",
-      });
+      garantirEspaco(FOTO_GRANDE + 24);
+      const linhaY = y;
+      try {
+        doc.image(item.fotoBuffer as Buffer, colItem, linhaY, { fit: [FOTO_GRANDE, FOTO_GRANDE] });
+      } catch {
+        // imagem inválida/corrompida — ignora e segue sem a foto
+      }
 
-      y = linhaY + (temFoto ? THUMB + 10 : 20);
+      const textX = colItem + FOTO_GRANDE + 16;
+      const textWidth = MARGIN + contentWidth - textX;
+      doc.fontSize(12).fillColor(TEXT).text(item.nome, textX, linhaY + 8, { width: textWidth });
+      doc
+        .fontSize(9)
+        .fillColor(MUTED)
+        .text(`Qtd: ${item.quantidade}`, textX, linhaY + 30, { width: textWidth })
+        .text(`Valor unit.: ${formatBRL(item.valorUnitario)}`, textX, linhaY + 46, { width: textWidth });
+      doc
+        .fontSize(11)
+        .fillColor(ACCENT)
+        .text(`Total: ${formatBRL(item.valorUnitario * item.quantidade)}`, textX, linhaY + 64, { width: textWidth });
+
+      y = linhaY + FOTO_GRANDE + 20;
       doc.moveTo(MARGIN, y - 6).lineTo(MARGIN + contentWidth, y - 6).strokeColor(BORDER).stroke();
     }
 
