@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ComboBox } from "@/components/ComboBox";
-import { Input } from "@/components/ui/Field";
+import { Input, Select } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { FotoDropInput } from "@/components/FotoDropInput";
 import type { ProdutoOpcao } from "@/components/PedidoItensEditor";
@@ -82,7 +82,18 @@ export function AddItemPedidoForm({
           <Input name="valor_unitario" type="number" step="0.01" value={valor} onChange={(e) => setValor(Number(e.target.value) || 0)} />
         </div>
       </div>
-      {comFoto && <FotoDropInput label="Foto da peça (opcional, aparece no PDF pro cliente)" />}
+      {comFoto && (
+        <div className="space-y-2">
+          <FotoDropInput label="Foto da peça (opcional, aparece no PDF pro cliente)" />
+          <div className="max-w-[200px]">
+            <label className="mb-1 block text-xs font-medium text-muted">Tamanho no PDF</label>
+            <Select name="foto_tamanho" defaultValue="grande">
+              <option value="grande">Grande (~5cm)</option>
+              <option value="pequena">Pequena (miniatura)</option>
+            </Select>
+          </div>
+        </div>
+      )}
       <Button type="submit" variant="secondary">
         {label}
       </Button>

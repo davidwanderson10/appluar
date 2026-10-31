@@ -93,12 +93,23 @@ export async function addItemOrcamento(orcamentoId: number, formData: FormData) 
   const cor = String(formData.get("cor") || "") || null;
   const custo_unitario = Number(formData.get("custo_unitario") || 0);
   const valor_unitario = Number(formData.get("valor_unitario") || 0);
+  const foto_grande = String(formData.get("foto_tamanho") || "grande") !== "pequena";
 
   if (!produto_id && !nome_avulso) throw new Error("Informe um produto ou nome do item");
 
   const { data: itemInserido, error } = await supabase
     .from("itens_orcamento")
-    .insert({ orcamento_id: orcamentoId, produto_id, nome_avulso, quantidade, material, cor, custo_unitario, valor_unitario })
+    .insert({
+      orcamento_id: orcamentoId,
+      produto_id,
+      nome_avulso,
+      quantidade,
+      material,
+      cor,
+      custo_unitario,
+      valor_unitario,
+      foto_grande,
+    })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
@@ -124,6 +135,7 @@ export async function updateItemOrcamento(orcamentoId: number, itemId: number, f
       cor: String(formData.get("cor") || "") || null,
       custo_unitario: Number(formData.get("custo_unitario") || 0),
       valor_unitario: Number(formData.get("valor_unitario") || 0),
+      foto_grande: String(formData.get("foto_tamanho") || "grande") !== "pequena",
       ...(fotoUrl ? { foto_url: fotoUrl } : {}),
     })
     .eq("id", itemId);

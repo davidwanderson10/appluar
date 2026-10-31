@@ -25,7 +25,7 @@ export interface OrcamentoPdfData {
   data: string;
   validade: string | null;
   cliente: { nome: string; telefone: string | null; email: string | null };
-  itens: { nome: string; quantidade: number; valorUnitario: number; fotoBuffer?: Buffer | null }[];
+  itens: { nome: string; quantidade: number; valorUnitario: number; fotoBuffer?: Buffer | null; fotoGrande?: boolean }[];
   vendaTotal: number;
 }
 
@@ -94,9 +94,11 @@ export function gerarOrcamentoPdf(orcamento: OrcamentoPdfData, logoPath: string)
     doc.moveTo(MARGIN, y).lineTo(MARGIN + contentWidth, y).strokeColor(BORDER).stroke();
     y += 8;
 
-    // ~5cm — itens com foto ganham um "card" maior (imagem + dados ao lado) em vez da
-    // linha fina da tabela, senão a imagem fica pequena demais pro cliente ver detalhe.
+    // ~5cm quando "grande" — itens assim ganham um "card" maior (imagem + dados ao lado) em vez
+    // da linha fina da tabela, senão a imagem fica pequena demais pro cliente ver detalhe.
+    // "Pequena" mantém a linha compacta da tabela, útil quando o orçamento tem muitos itens.
     const FOTO_GRANDE = 142;
+    const FOTO_PEQUENA = 32;
     const RODAPE_RESERVA = 50;
 
     function garantirEspaco(altura: number) {
@@ -108,18 +110,31 @@ export function gerarOrcamentoPdf(orcamento: OrcamentoPdfData, logoPath: string)
 
     for (const item of orcamento.itens) {
       const temFoto = item.fotoBuffer && item.fotoBuffer.length > 0;
+      const grande = temFoto && item.fotoGrande !== false;
+      const pequena = temFoto && item.fotoGrande === false;
 
-      if (!temFoto) {
+      if (!grande) {
+        // sem foto, ou foto pequena: linha compacta de tabela (com miniatura à esquerda, se houver)
         garantirEspaco(20);
         const linhaY = y;
-        doc.fontSize(10).fillColor(TEXT).text(item.nome, colItem, linhaY, { width: colQtd - colItem });
+        const textX = pequena ? colItem + FOTO_PEQUENA + 8 : colItem;
+
+        if (pequena) {
+          try {
+            doc.image(item.fotoBuffer as Buffer, colItem, linhaY, { fit: [FOTO_PEQUENA, FOTO_PEQUENA] });
+          } catch {
+            // imagem inválida/corrompida — ignora e segue sem a miniatura
+          }
+        }
+
+        doc.fontSize(10).fillColor(TEXT).text(item.nome, textX, linhaY, { width: colQtd - textX });
         doc.text(String(item.quantidade), colQtd, linhaY, { width: colUnit - colQtd, align: "center" });
         doc.text(formatBRL(item.valorUnitario), colUnit, linhaY, { width: colTotal - colUnit, align: "right" });
         doc.text(formatBRL(item.valorUnitario * item.quantidade), colTotal, linhaY, {
           width: MARGIN + contentWidth - colTotal,
           align: "right",
         });
-        y = linhaY + 20;
+        y = linhaY + (pequena ? FOTO_PEQUENA + 10 : 20);
         doc.moveTo(MARGIN, y - 6).lineTo(MARGIN + contentWidth, y - 6).strokeColor(BORDER).stroke();
         continue;
       }

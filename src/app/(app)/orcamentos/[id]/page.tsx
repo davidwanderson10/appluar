@@ -75,6 +75,7 @@ export default async function OrcamentoDetalhePage({ params }: { params: Promise
                     updateAction={updateItemWithId}
                     removeAction={removeItemWithId}
                     fotoUrl={item.foto_url}
+                    fotoGrande={item.foto_grande}
                     comFoto
                   />
                 );

@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/Field";
+import { Input, Select } from "@/components/ui/Field";
 import { FotoDropInput } from "@/components/FotoDropInput";
 import { formatBRL } from "@/lib/format";
 
@@ -11,6 +11,7 @@ export function ItemLinhaEditavel({
   updateAction,
   removeAction,
   fotoUrl,
+  fotoGrande,
   comFoto,
 }: {
   nome: string;
@@ -18,6 +19,7 @@ export function ItemLinhaEditavel({
   updateAction: (formData: FormData) => void;
   removeAction: (formData: FormData) => void;
   fotoUrl?: string | null;
+  fotoGrande?: boolean;
   comFoto?: boolean;
 }) {
   return (
@@ -60,8 +62,15 @@ export function ItemLinhaEditavel({
       </div>
 
       {comFoto && (
-        <div className="mt-3 border-t border-border pt-3">
+        <div className="mt-3 space-y-2 border-t border-border pt-3">
           <FotoDropInput previewUrl={fotoUrl} label="Foto da peça (opcional, aparece no PDF pro cliente)" />
+          <div className="max-w-[200px]">
+            <label className="mb-1 block text-xs font-medium text-muted">Tamanho no PDF</label>
+            <Select name="foto_tamanho" defaultValue={fotoGrande === false ? "pequena" : "grande"}>
+              <option value="grande">Grande (~5cm)</option>
+              <option value="pequena">Pequena (miniatura)</option>
+            </Select>
+          </div>
         </div>
       )}
     </form>

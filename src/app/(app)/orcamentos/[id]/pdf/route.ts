@@ -43,6 +43,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         quantidade: i.quantidade,
         valorUnitario: i.valor_unitario,
         fotoBuffer,
+        fotoGrande: i.foto_grande !== false,
       };
     })
   );

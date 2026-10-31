@@ -119,6 +119,7 @@ export interface ItemOrcamento {
   custo_unitario: number;
   valor_unitario: number;
   foto_url: string | null;
+  foto_grande: boolean;
   created_at: string;
 }
 
