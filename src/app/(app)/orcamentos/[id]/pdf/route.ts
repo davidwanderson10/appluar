@@ -27,17 +27,33 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   const vendaTotal = (itens ?? []).reduce((acc, i) => acc + i.valor_unitario * i.quantidade, 0);
 
+  const itensComFoto = await Promise.all(
+    (itens ?? []).map(async (i) => {
+      let fotoBuffer: Buffer | null = null;
+      if (i.foto_url) {
+        try {
+          const resp = await fetch(i.foto_url);
+          if (resp.ok) fotoBuffer = Buffer.from(await resp.arrayBuffer());
+        } catch {
+          // falha ao baixar a foto — segue sem ela, não trava a geração do PDF
+        }
+      }
+      return {
+        nome: i.nome_avulso ?? (i.produto_id ? nomeProduto.get(i.produto_id) : null) ?? "Item",
+        quantidade: i.quantidade,
+        valorUnitario: i.valor_unitario,
+        fotoBuffer,
+      };
+    })
+  );
+
   const buffer = await gerarOrcamentoPdf(
     {
       id: orcamento.id,
       data: orcamento.data,
       validade: orcamento.validade,
       cliente: cliente ?? { nome: "Cliente", telefone: null, email: null },
-      itens: (itens ?? []).map((i) => ({
-        nome: i.nome_avulso ?? (i.produto_id ? nomeProduto.get(i.produto_id) : null) ?? "Item",
-        quantidade: i.quantidade,
-        valorUnitario: i.valor_unitario,
-      })),
+      itens: itensComFoto,
       vendaTotal,
     },
     LOGO_PATH

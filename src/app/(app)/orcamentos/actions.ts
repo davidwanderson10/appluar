@@ -6,6 +6,23 @@ import { createClient } from "@/lib/supabase/server";
 import { baixarEstoquePorItem } from "@/lib/estoque";
 import type { ItemPedidoInput } from "@/components/PedidoItensEditor";
 
+// Foto da peça (render/foto) anexada a um item do orçamento, pra cliente ver antes de aprovar.
+async function uploadFotoItem(supabase: Awaited<ReturnType<typeof createClient>>, formData: FormData, itemId: number) {
+  const foto = formData.get("foto");
+  if (!(foto instanceof File) || foto.size === 0) return undefined;
+
+  const ext = foto.name.split(".").pop() || "jpg";
+  const path = `item-${itemId}-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("orcamentos").upload(path, foto, {
+    contentType: foto.type,
+    upsert: true,
+  });
+  if (error) return undefined;
+
+  const { data } = supabase.storage.from("orcamentos").getPublicUrl(path);
+  return data.publicUrl;
+}
+
 export async function createOrcamento(formData: FormData) {
   const supabase = await createClient();
 
@@ -79,16 +96,25 @@ export async function addItemOrcamento(orcamentoId: number, formData: FormData) 
 
   if (!produto_id && !nome_avulso) throw new Error("Informe um produto ou nome do item");
 
-  const { error } = await supabase
+  const { data: itemInserido, error } = await supabase
     .from("itens_orcamento")
-    .insert({ orcamento_id: orcamentoId, produto_id, nome_avulso, quantidade, material, cor, custo_unitario, valor_unitario });
+    .insert({ orcamento_id: orcamentoId, produto_id, nome_avulso, quantidade, material, cor, custo_unitario, valor_unitario })
+    .select("id")
+    .single();
   if (error) throw new Error(error.message);
+
+  const fotoUrl = await uploadFotoItem(supabase, formData, itemInserido.id);
+  if (fotoUrl) {
+    await supabase.from("itens_orcamento").update({ foto_url: fotoUrl }).eq("id", itemInserido.id);
+  }
 
   revalidatePath(`/orcamentos/${orcamentoId}`);
 }
 
 export async function updateItemOrcamento(orcamentoId: number, itemId: number, formData: FormData) {
   const supabase = await createClient();
+
+  const fotoUrl = await uploadFotoItem(supabase, formData, itemId);
 
   const { error } = await supabase
     .from("itens_orcamento")
@@ -98,6 +124,7 @@ export async function updateItemOrcamento(orcamentoId: number, itemId: number, f
       cor: String(formData.get("cor") || "") || null,
       custo_unitario: Number(formData.get("custo_unitario") || 0),
       valor_unitario: Number(formData.get("valor_unitario") || 0),
+      ...(fotoUrl ? { foto_url: fotoUrl } : {}),
     })
     .eq("id", itemId);
   if (error) throw new Error(error.message);

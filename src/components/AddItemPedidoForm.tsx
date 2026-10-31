@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ComboBox } from "@/components/ComboBox";
 import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
+import { FotoDropInput } from "@/components/FotoDropInput";
 import type { ProdutoOpcao } from "@/components/PedidoItensEditor";
 
 const AVULSO = "avulso";
@@ -12,10 +13,12 @@ export function AddItemPedidoForm({
   produtos,
   action,
   label = "+ Adicionar item ao pedido",
+  comFoto,
 }: {
   produtos: ProdutoOpcao[];
   action: (formData: FormData) => void;
   label?: string;
+  comFoto?: boolean;
 }) {
   const [produtoId, setProdutoId] = useState("");
   const [nomeAvulso, setNomeAvulso] = useState("");
@@ -79,6 +82,7 @@ export function AddItemPedidoForm({
           <Input name="valor_unitario" type="number" step="0.01" value={valor} onChange={(e) => setValor(Number(e.target.value) || 0)} />
         </div>
       </div>
+      {comFoto && <FotoDropInput label="Foto da peça (opcional, aparece no PDF pro cliente)" />}
       <Button type="submit" variant="secondary">
         {label}
       </Button>

@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/Field";
+import { FotoDropInput } from "@/components/FotoDropInput";
 import { formatBRL } from "@/lib/format";
 
 // Linha de item (pedido/orçamento) com campos realmente editáveis. Usa dois botões "submit" com
@@ -9,11 +10,15 @@ export function ItemLinhaEditavel({
   item,
   updateAction,
   removeAction,
+  fotoUrl,
+  comFoto,
 }: {
   nome: string;
   item: { quantidade: number; material: string | null; cor: string | null; custo_unitario: number; valor_unitario: number };
   updateAction: (formData: FormData) => void;
   removeAction: (formData: FormData) => void;
+  fotoUrl?: string | null;
+  comFoto?: boolean;
 }) {
   return (
     <form className="rounded-lg border border-border p-3">
@@ -53,6 +58,12 @@ export function ItemLinhaEditavel({
           </button>
         </div>
       </div>
+
+      {comFoto && (
+        <div className="mt-3 border-t border-border pt-3">
+          <FotoDropInput previewUrl={fotoUrl} label="Foto da peça (opcional, aparece no PDF pro cliente)" />
+        </div>
+      )}
     </form>
   );
 }

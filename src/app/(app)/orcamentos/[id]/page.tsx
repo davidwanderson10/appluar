@@ -74,6 +74,8 @@ export default async function OrcamentoDetalhePage({ params }: { params: Promise
                     item={item}
                     updateAction={updateItemWithId}
                     removeAction={removeItemWithId}
+                    fotoUrl={item.foto_url}
+                    comFoto
                   />
                 );
               })}
@@ -82,7 +84,12 @@ export default async function OrcamentoDetalhePage({ params }: { params: Promise
 
             {editavel && (
               <div className="mt-4">
-                <AddItemPedidoForm produtos={produtos ?? []} action={addItemWithId} label="+ Adicionar item ao orçamento" />
+                <AddItemPedidoForm
+                  produtos={produtos ?? []}
+                  action={addItemWithId}
+                  label="+ Adicionar item ao orçamento"
+                  comFoto
+                />
               </div>
             )}
 
