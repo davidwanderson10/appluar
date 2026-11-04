@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { redirectWithToast } from "@/lib/toast";
 
 export async function updateConfigPrecificacao(formData: FormData) {
   const supabase = await createClient();
@@ -28,4 +29,5 @@ export async function updateConfigPrecificacao(formData: FormData) {
 
   revalidatePath("/configuracoes");
   revalidatePath("/calculadora");
+  redirectWithToast("/configuracoes", "Configurações salvas com sucesso.");
 }

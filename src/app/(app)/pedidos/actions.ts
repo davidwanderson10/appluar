@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { redirectWithToast } from "@/lib/toast";
 import { baixarEstoquePorItem, estornarEstoque } from "@/lib/estoque";
 import type { ItemPedidoInput } from "@/components/PedidoItensEditor";
 
@@ -66,7 +66,7 @@ export async function createPedido(formData: FormData) {
 
   revalidatePath("/pedidos");
   revalidatePath("/estoque");
-  redirect(`/pedidos/${pedido.id}`);
+  redirectWithToast(`/pedidos/${pedido.id}`, "Pedido criado com sucesso.");
 }
 
 export async function updatePedido(id: number, formData: FormData) {
@@ -95,7 +95,7 @@ export async function updatePedido(id: number, formData: FormData) {
 
   revalidatePath("/pedidos");
   revalidatePath(`/pedidos/${id}`);
-  redirect(`/pedidos/${id}`);
+  redirectWithToast(`/pedidos/${id}`, "Pedido atualizado com sucesso.");
 }
 
 export async function addItemPedido(pedidoId: number, formData: FormData) {
@@ -128,6 +128,7 @@ export async function addItemPedido(pedidoId: number, formData: FormData) {
 
   revalidatePath(`/pedidos/${pedidoId}`);
   revalidatePath("/estoque");
+  redirectWithToast(`/pedidos/${pedidoId}`, "Item adicionado ao pedido.");
 }
 
 export async function updateItemPedido(pedidoId: number, itemId: number, formData: FormData) {
@@ -173,6 +174,7 @@ export async function updateItemPedido(pedidoId: number, itemId: number, formDat
 
   revalidatePath(`/pedidos/${pedidoId}`);
   revalidatePath("/estoque");
+  redirectWithToast(`/pedidos/${pedidoId}`, "Item atualizado.");
 }
 
 export async function removeItemPedido(pedidoId: number, itemId: number) {
@@ -192,6 +194,7 @@ export async function removeItemPedido(pedidoId: number, itemId: number) {
 
   revalidatePath(`/pedidos/${pedidoId}`);
   revalidatePath("/estoque");
+  redirectWithToast(`/pedidos/${pedidoId}`, "Item removido.");
 }
 
 // Perda de produção (peça falhou/descolou no meio da impressão). Gera uma despesa automática
@@ -237,6 +240,7 @@ export async function createPerdaPedido(pedidoId: number, formData: FormData) {
   revalidatePath(`/pedidos/${pedidoId}`);
   revalidatePath("/despesas");
   revalidatePath("/dashboard");
+  redirectWithToast(`/pedidos/${pedidoId}`, "Perda registrada.");
 }
 
 export async function deletePerdaPedido(pedidoId: number, perdaId: number) {
@@ -256,6 +260,7 @@ export async function deletePerdaPedido(pedidoId: number, perdaId: number) {
   revalidatePath(`/pedidos/${pedidoId}`);
   revalidatePath("/despesas");
   revalidatePath("/dashboard");
+  redirectWithToast(`/pedidos/${pedidoId}`, "Perda removida.");
 }
 
 export async function deletePedido(id: number) {
@@ -284,4 +289,5 @@ export async function deletePedido(id: number) {
   revalidatePath("/estoque");
   revalidatePath("/despesas");
   revalidatePath("/dashboard");
+  redirectWithToast("/pedidos", "Pedido excluído.");
 }

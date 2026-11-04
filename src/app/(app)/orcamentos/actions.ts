@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { redirectWithToast } from "@/lib/toast";
 import { baixarEstoquePorItem } from "@/lib/estoque";
 import type { ItemPedidoInput } from "@/components/PedidoItensEditor";
 
@@ -17,7 +17,7 @@ async function uploadFotoItem(supabase: Awaited<ReturnType<typeof createClient>>
     contentType: foto.type,
     upsert: true,
   });
-  if (error) return undefined;
+  if (error) throw new Error(`Falha ao enviar a foto: ${error.message}`);
 
   const { data } = supabase.storage.from("orcamentos").getPublicUrl(path);
   return data.publicUrl;
@@ -61,7 +61,7 @@ export async function createOrcamento(formData: FormData) {
   );
 
   revalidatePath("/orcamentos");
-  redirect(`/orcamentos/${orcamento.id}`);
+  redirectWithToast(`/orcamentos/${orcamento.id}`, "Orçamento criado com sucesso.");
 }
 
 export async function updateOrcamentoStatus(id: number, formData: FormData) {
@@ -80,7 +80,7 @@ export async function updateOrcamentoStatus(id: number, formData: FormData) {
 
   revalidatePath("/orcamentos");
   revalidatePath(`/orcamentos/${id}`);
-  redirect(`/orcamentos/${id}`);
+  redirectWithToast(`/orcamentos/${id}`, "Orçamento atualizado com sucesso.");
 }
 
 export async function addItemOrcamento(orcamentoId: number, formData: FormData) {
@@ -120,6 +120,7 @@ export async function addItemOrcamento(orcamentoId: number, formData: FormData) 
   }
 
   revalidatePath(`/orcamentos/${orcamentoId}`);
+  redirectWithToast(`/orcamentos/${orcamentoId}`, "Item adicionado ao orçamento.");
 }
 
 export async function updateItemOrcamento(orcamentoId: number, itemId: number, formData: FormData) {
@@ -142,6 +143,7 @@ export async function updateItemOrcamento(orcamentoId: number, itemId: number, f
   if (error) throw new Error(error.message);
 
   revalidatePath(`/orcamentos/${orcamentoId}`);
+  redirectWithToast(`/orcamentos/${orcamentoId}`, "Item atualizado.");
 }
 
 export async function removeItemOrcamento(orcamentoId: number, itemId: number) {
@@ -149,6 +151,7 @@ export async function removeItemOrcamento(orcamentoId: number, itemId: number) {
   await supabase.from("itens_orcamento").delete().eq("id", itemId);
 
   revalidatePath(`/orcamentos/${orcamentoId}`);
+  redirectWithToast(`/orcamentos/${orcamentoId}`, "Item removido.");
 }
 
 export async function converterEmPedido(orcamentoId: number) {
@@ -206,7 +209,7 @@ export async function converterEmPedido(orcamentoId: number) {
   revalidatePath("/orcamentos");
   revalidatePath("/pedidos");
   revalidatePath("/estoque");
-  redirect(`/pedidos/${pedido.id}`);
+  redirectWithToast(`/pedidos/${pedido.id}`, "Orçamento convertido em pedido.");
 }
 
 export async function deleteOrcamento(id: number) {
@@ -214,4 +217,5 @@ export async function deleteOrcamento(id: number) {
   await supabase.from("orcamentos").delete().eq("id", id);
 
   revalidatePath("/orcamentos");
+  redirectWithToast("/orcamentos", "Orçamento excluído.");
 }

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { redirectWithToast } from "@/lib/toast";
 
 function clienteFromForm(formData: FormData) {
   const str = (key: string) => {
@@ -38,7 +39,7 @@ export async function createCliente(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/clientes");
-  redirect(`/clientes/${data.id}`);
+  redirectWithToast(`/clientes/${data.id}`, "Cliente cadastrado com sucesso.");
 }
 
 // Cadastro rápido, usado no seletor de cliente ao criar um pedido/orçamento sem sair da tela.
@@ -65,7 +66,7 @@ export async function updateCliente(id: number, formData: FormData) {
 
   revalidatePath("/clientes");
   revalidatePath(`/clientes/${id}`);
-  redirect(`/clientes/${id}`);
+  redirectWithToast(`/clientes/${id}`, "Cliente atualizado com sucesso.");
 }
 
 export async function deleteCliente(id: number) {
@@ -79,4 +80,5 @@ export async function deleteCliente(id: number) {
   }
 
   revalidatePath("/clientes");
+  redirectWithToast("/clientes", "Cliente excluído.");
 }

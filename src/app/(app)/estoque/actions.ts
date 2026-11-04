@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { redirectWithToast } from "@/lib/toast";
 
 export async function createInsumo(formData: FormData) {
   const supabase = await createClient();
@@ -21,7 +21,7 @@ export async function createInsumo(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/estoque");
-  redirect("/estoque");
+  redirectWithToast("/estoque", "Insumo cadastrado com sucesso.");
 }
 
 export async function updateInsumo(id: number, formData: FormData) {
@@ -44,7 +44,7 @@ export async function updateInsumo(id: number, formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/estoque");
-  redirect("/estoque");
+  redirectWithToast("/estoque", "Insumo atualizado com sucesso.");
 }
 
 export async function deleteInsumo(id: number) {
@@ -52,6 +52,7 @@ export async function deleteInsumo(id: number) {
   await supabase.from("insumos").delete().eq("id", id);
 
   revalidatePath("/estoque");
+  redirectWithToast("/estoque", "Insumo excluído.");
 }
 
 export async function registrarMovimentacao(insumoId: number, formData: FormData) {
@@ -97,4 +98,5 @@ export async function registrarMovimentacao(insumoId: number, formData: FormData
   }
 
   revalidatePath("/estoque");
+  redirectWithToast("/estoque", "Movimentação registrada.");
 }

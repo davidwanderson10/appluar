@@ -17,6 +17,14 @@ export function FotoDropInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(previewUrl ?? null);
   const [dragOver, setDragOver] = useState(false);
+  const [lastPreviewUrl, setLastPreviewUrl] = useState(previewUrl ?? null);
+
+  // Se o previewUrl vindo do servidor mudar (ex.: salvou e o upload terminou), descarta
+  // qualquer preview local (blob: temporário) e passa a refletir o que realmente persistiu.
+  if ((previewUrl ?? null) !== lastPreviewUrl) {
+    setLastPreviewUrl(previewUrl ?? null);
+    setPreview(previewUrl ?? null);
+  }
 
   function setFile(file: File | null) {
     const input = inputRef.current;

@@ -5,6 +5,7 @@ import { ComboBox } from "@/components/ComboBox";
 import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { createClienteQuick } from "@/app/(app)/clientes/actions";
+import { useToast } from "@/components/Toast";
 
 const NOVO = "__novo__";
 
@@ -22,6 +23,7 @@ export function ClienteCombo({
   const [telefone, setTelefone] = useState("");
   const [erro, setErro] = useState("");
   const [pending, startTransition] = useTransition();
+  const { showToast } = useToast();
 
   function handleChange(v: string) {
     if (v === NOVO) {
@@ -50,6 +52,7 @@ export function ClienteCombo({
         setCriando(false);
         setNome("");
         setTelefone("");
+        showToast(`Cliente "${novo.nome}" cadastrado.`);
       } catch (e) {
         setErro(e instanceof Error ? e.message : "Erro ao cadastrar cliente");
       }

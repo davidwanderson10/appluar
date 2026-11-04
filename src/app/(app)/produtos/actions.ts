@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { redirectWithToast } from "@/lib/toast";
 
 function produtoFromForm(formData: FormData) {
   const str = (key: string) => {
@@ -41,7 +41,7 @@ async function uploadFoto(formData: FormData, produtoId: number) {
     contentType: foto.type,
     upsert: true,
   });
-  if (error) return undefined;
+  if (error) throw new Error(`Falha ao enviar a foto: ${error.message}`);
 
   const { data } = supabase.storage.from("produtos").getPublicUrl(path);
   return data.publicUrl;
@@ -61,7 +61,7 @@ export async function createProduto(formData: FormData) {
   }
 
   revalidatePath("/produtos");
-  redirect(`/produtos/${data.id}`);
+  redirectWithToast(`/produtos/${data.id}`, "Produto cadastrado com sucesso.");
 }
 
 export async function updateProduto(id: number, formData: FormData) {
@@ -79,7 +79,7 @@ export async function updateProduto(id: number, formData: FormData) {
 
   revalidatePath("/produtos");
   revalidatePath(`/produtos/${id}`);
-  redirect(`/produtos/${id}`);
+  redirectWithToast(`/produtos/${id}`, "Produto atualizado com sucesso.");
 }
 
 export async function deleteProduto(id: number) {
@@ -87,4 +87,5 @@ export async function deleteProduto(id: number) {
   await supabase.from("produtos").delete().eq("id", id);
 
   revalidatePath("/produtos");
+  redirectWithToast("/produtos", "Produto excluído.");
 }

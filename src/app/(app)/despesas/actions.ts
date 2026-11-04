@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { redirectWithToast } from "@/lib/toast";
 
 function despesaFromForm(formData: FormData) {
   const str = (key: string) => {
@@ -30,7 +30,7 @@ export async function createDespesa(formData: FormData) {
 
   revalidatePath("/despesas");
   revalidatePath("/dashboard");
-  redirect("/despesas");
+  redirectWithToast("/despesas", "Despesa cadastrada com sucesso.");
 }
 
 export async function updateDespesa(id: number, formData: FormData) {
@@ -43,7 +43,7 @@ export async function updateDespesa(id: number, formData: FormData) {
 
   revalidatePath("/despesas");
   revalidatePath("/dashboard");
-  redirect("/despesas");
+  redirectWithToast("/despesas", "Despesa atualizada com sucesso.");
 }
 
 export async function deleteDespesa(id: number) {
@@ -52,5 +52,5 @@ export async function deleteDespesa(id: number) {
 
   revalidatePath("/despesas");
   revalidatePath("/dashboard");
-  redirect("/despesas");
+  redirectWithToast("/despesas", "Despesa excluída.");
 }
