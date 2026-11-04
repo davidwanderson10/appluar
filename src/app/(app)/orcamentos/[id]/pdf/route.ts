@@ -30,12 +30,19 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const itensComFoto = await Promise.all(
     (itens ?? []).map(async (i) => {
       let fotoBuffer: Buffer | null = null;
+      let fotoErro: string | null = null;
       if (i.foto_url) {
         try {
-          const resp = await fetch(i.foto_url);
-          if (resp.ok) fotoBuffer = Buffer.from(await resp.arrayBuffer());
-        } catch {
-          // falha ao baixar a foto — segue sem ela, não trava a geração do PDF
+          const resp = await fetch(i.foto_url, { cache: "no-store" });
+          if (resp.ok) {
+            fotoBuffer = Buffer.from(await resp.arrayBuffer());
+          } else {
+            fotoErro = `HTTP ${resp.status} ao baixar foto`;
+          }
+        } catch (e) {
+          // Mostra o motivo no próprio PDF (diagnóstico temporário) — não dá pra ver logs do
+          // servidor diretamente, então isso aparece no documento até confirmarmos a causa.
+          fotoErro = e instanceof Error ? e.message : "erro desconhecido ao baixar foto";
         }
       }
       return {
@@ -43,6 +50,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         quantidade: i.quantidade,
         valorUnitario: i.valor_unitario,
         fotoBuffer,
+        fotoErro,
         fotoGrande: i.foto_grande !== false,
       };
     })

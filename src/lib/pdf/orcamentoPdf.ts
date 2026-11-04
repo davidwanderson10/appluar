@@ -25,7 +25,14 @@ export interface OrcamentoPdfData {
   data: string;
   validade: string | null;
   cliente: { nome: string; telefone: string | null; email: string | null };
-  itens: { nome: string; quantidade: number; valorUnitario: number; fotoBuffer?: Buffer | null; fotoGrande?: boolean }[];
+  itens: {
+    nome: string;
+    quantidade: number;
+    valorUnitario: number;
+    fotoBuffer?: Buffer | null;
+    fotoGrande?: boolean;
+    fotoErro?: string | null;
+  }[];
   vendaTotal: number;
 }
 
@@ -135,6 +142,11 @@ export function gerarOrcamentoPdf(orcamento: OrcamentoPdfData, logoPath: string)
           align: "right",
         });
         y = linhaY + (pequena ? FOTO_PEQUENA + 10 : 20);
+        if (item.fotoErro) {
+          // Diagnóstico temporário: mostra por que a foto não carregou, já que não dá pra ver log do servidor.
+          doc.fontSize(7).fillColor("#c0392b").text(`[foto não carregou: ${item.fotoErro}]`, textX, y, { width: colQtd - textX });
+          y += 10;
+        }
         doc.moveTo(MARGIN, y - 6).lineTo(MARGIN + contentWidth, y - 6).strokeColor(BORDER).stroke();
         continue;
       }
